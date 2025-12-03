@@ -12,12 +12,10 @@
  * - Control de dirección mediante pin de fase.
  * - Función "until" para parar en una posición objetivo.
  */
-
-#include <stdint.h>
-#include <gpio.h>
-#include <esp_log.h>
-#include <ledc_types.h>
-
+#pragma once
+#include <cstdint>
+#include "driver/gpio.h"
+#include "driver/ledc.h"
 
  /**
   * @brief Dirección de apertura.
@@ -55,7 +53,7 @@ class motorController{
     bool until;         ///< Flag de modo "until" (parar en objetivo).
     uint16_t objective; ///< Posición objetivo.
 
-    // ledc_channel_t pwm_channel; ///< Canal PWM para controlar la velocidad.
+    ledc_channel_t pwm_channel; ///< Canal PWM para controlar la velocidad.
 
     void setup_rotary(); ///< Configura pines del encoder.
     void setup_motor();  ///< Configura pines del motor.
@@ -71,7 +69,7 @@ class motorController{
       * @param max_pos   Posición máxima.
       * @param min_pos   Posición mínima.
       */
-     motorController(gpio_num_t clk_pin, gpio_num_t dt_pin, gpio_num_t en_pin, gpio_num_t ph_pin, gpio_num_t sleep_pin, uint16_t max_pos, uint16_t min_pos);
+     motorController(gpio_num_t clk_pin, gpio_num_t dt_pin, gpio_num_t en_pin, gpio_num_t ph_pin, gpio_num_t sleep_pin, uint16_t max_pos, uint16_t min_pos, ledc_channel_t pwm_channel);
  
      /**
       * @brief Actualiza la posición según el encoder.
@@ -118,7 +116,7 @@ class motorController{
 
  // ==================== Implementación ====================
  
- motorController::motorController(gpio_num_t clk_pin, gpio_num_t dt_pin, gpio_num_t en_pin, gpio_num_t ph_pin, gpio_num_t sleep_pin, uint16_t max_pos, uint16_t min_pos)
+ motorController::motorController(gpio_num_t clk_pin, gpio_num_t dt_pin, gpio_num_t en_pin, gpio_num_t ph_pin, gpio_num_t sleep_pin, uint16_t max_pos, uint16_t min_pos, ledc_channel_t pwm_channel)
  {
      this->clk = clk_pin;
      this->dt = dt_pin;
@@ -128,6 +126,7 @@ class motorController{
      this->max_pos = max_pos;
      this->min_pos = min_pos;
      this->position = 0;
+     this->pwm_channel = pwn_channel;
      this->setup_rotary();
      this->setup_motor();
  }
@@ -152,11 +151,32 @@ class motorController{
 
      io_conf.intr_type = GPIO_INTR_DISABLE;
      io_conf.mode = GPIO_MODE_OUTPUT;
-     io_conf.pin_bit_mask = (1ULL << clk) | (1ULL << dt);
-     io_conf.pull_up_en = GPIO_PULLUP_ENABLE;
+     io_conf.pin_bit_mask = (1ULL << ph) | (1ULL << sleep);
+     io_conf.pull_up_en = GPIO_PULLUP_DISABLE;
      io_conf.pull_down_en = GPIO_PULLDOWN_DISABLE;
 
      gpio_config(&io_conf);
+
+    gpio_set_level(this->sleep, 1);
+
+    
+    ledc_timer_config_t ledc_timer{};
+    ledc_timer.speed_mode       = PWM_MODE;
+    ledc_timer.duty_resolution  = LEDC_TIMER_8_BIT;
+    ledc_timer.timer_num        = PWM_TIMER;
+    ledc_timer.freq_hz          = 5000;        
+    ledc_timer.clk_cfg          = LEDC_AUTO_CLK;
+    ledc_timer_config(&ledc_timer);
+
+    ledc_channel_config_t ledc_channel{};
+    ledc_channel.gpio_num   = ena;
+    ledc_channel.speed_mode = PWM_MODE;
+    ledc_channel.channel    = PWM_CH;
+    ledc_channel.timer_sel  = PWM_TIMER;
+    ledc_channel.duty       = 0;
+    ledc_channel.hpoint     = 0;
+    ledc_channel_config(&ledc_channel);
+
  }
  
  void motorController::step()

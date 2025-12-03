@@ -6,27 +6,25 @@
  * 
  * **Estados posibles:**
  * - @ref ESTADO_NORMAL:
- *   - @ref FASE_1: Motor en reposo. -------- reposo
- *   - @ref FASE_2: Motor abre la mano. ------- apertura
- *   - @ref FASE_3: Motor cierra la mano. ------- cierre
+ *   - @ref FASE_1: Motor en reposo.
+ *   - @ref FASE_2: Motor abre la mano.
+ *   - @ref FASE_3: Motor cierra la mano.
  * 
  * - @ref ESTADO_SEGURIDAD:
- *   - @ref FASE_1: Prótesis parada durante 3 segundos. ----- parada total
- *   - @ref FASE_2: Abrir mano durante 3 segundos. ---- posición base
+ *   - @ref FASE_1: Prótesis parada durante 3 segundos.
+ *   - @ref FASE_2: Abrir mano durante 3 segundos.
  * 
  * - @ref ESTADO_CALIBRADO_UMBRALES:
- *   - @ref FASE_1: Calibrar umbrales de activación. ---- obtención datos básicos señales usuario (contracción voluntaria musculos)
- *   - @ref FASE_2: Esperar hasta que se suelte el botón (umbrales calculados). -- se presiona botón durante la calibración y se suelta para continuar
- *   - @ref FASE_3: Calibrar umbrales de desactivación. --- medir señal que será reposo
+ *   - @ref FASE_1: Calibrar umbrales de activación.
+ *   - @ref FASE_2: Esperar hasta que se suelte el botón (umbrales calculados).
+ *   - @ref FASE_3: Calibrar umbrales de desactivación.
  * 
  * - @ref ESTADO_CALIBRADO_MOTORES:
- *   - @ref FASE_1: Motor en reposo. --- motores en modo baja potencia
- *   - @ref FASE_2: Motor abre la mano (manual). --- determina límite físico
- *   - @ref FASE_3: Motor cierra la mano (manual). -- determina límite físico de cierre
- *   - @ref FASE_4: Configurar posición 0 y cambiar a @ref ESTADO_NORMAL. ---- establece cual es la posición 0 y guarda todos los parámetros calibrados
+ *   - @ref FASE_1: Motor en reposo.
+ *   - @ref FASE_2: Motor abre la mano (manual).
+ *   - @ref FASE_3: Motor cierra la mano (manual).
+ *   - @ref FASE_4: Configurar posición 0 y cambiar a @ref ESTADO_NORMAL.
  * 
- * 
- *
  * @note Las fases no son necesariamente secuenciales; su numeración es solo para organizar.
  */
 
@@ -39,7 +37,7 @@
  enum Estado_Protesis
  {
      ESTADO_NORMAL,             ///< Funcionamiento normal de la prótesis.
-     ESTADO_SEGURIDAD,          ///< Modo de seguridad (secuencia De seguridad: parada y apertura).
+     ESTADO_SEGURIDAD,          ///< Modo de seguridad (secuencia se seguridad: parada y apertura).
      ESTADO_CALIBRADO_UMBRALES, ///< Modo de calibración de umbrales de activación/desactivación.
      ESTADO_CALIBRADO_MOTORES   ///< Modo de calibración de límites mecánicos del motor.
  };

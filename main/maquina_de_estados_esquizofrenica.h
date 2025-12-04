@@ -4,7 +4,7 @@
  * @details
  * La máquina de estados define los modos de funcionamiento de la prótesis y las fases asociadas a cada modo.
  * 
- * **Estados posibles:**
+ * **Estados posibles:** (POR REVIDAR)
  * - @ref ESTADO_NORMAL: 
  *      - @ref REPOSO
  *      - @ref APERTURA
@@ -34,7 +34,7 @@
  */
 
 
-/** Determinación nuevos criterios para las fases:
+/** Determinación nuevos criterios para las fases: (TEMPORALES)
  * 
  * FASE_INICIO << en esta se realiza el incio de los cuatro estados excepto el de seguridad
  * FASE_PASO_1 << en esta se realiza el primer paso, es decir, la primera acción de dicho estado
@@ -164,7 +164,7 @@ struct Maquina_de_estados_protesis
     enum Causa_Seguridad error_actual;  ///< Error que provoca que haya que entrar en @ref ESTADO_SEGURIDAD
 
     /**
-      * @brief Constructor que inicializa la prótesis en @ref ESTADO_NORMAL y @ref FASE_INICIO.
+      * @brief Constructor que inicializa la prótesis en @ref ESTADO_NORMAL y @ref FASE_INICIO. Aplicamos las condiciones iniciales
       */
     Maquina_de_estados_protesis ()
     {
@@ -173,51 +173,88 @@ struct Maquina_de_estados_protesis
         error_actual = causas_ninguna;
 
         /**
-         * @brief inciar condiciones utilizando los valores de los umbrales de la función anterior
+         * @brief iniciar condiciones utilizando los valores de los umbrales de la función anterior
          */
-        actualizacion () 
+        Condiciones_Seguridad.actualizacion (); // ALGO ESTÁ MAL
     };
 
+    /**
+     * @brief función encargada de actualizar de manera contínua los criterios.
+     * @return TRUE si debemos entrar en el estado de seguridad.
+     */
+    bool Comprobacion_Seguridad () 
+    {
+        //leer valores REVISAR CON EL CÓDIGO ORIGINAL
+        float corriente_motores = ;
+        float temperatura = ;
+        float velocidad = ;
+        float fuerza = ;
+        float señal_sensores = ;
+        float posicion = ;
 
-//******* CONTINUAR MIRANDO *********//
+        // actualizamos la estructura de condiciones
+        Condiciones_Seguridad.actualizacion (corriente_actual, temp_actual, velocidad_actual, fuerza_actual, señal_actual, posicion_actual); ///REVISAR CÓMO LLAAMAR A ESTAS VARIABELS
 
+        uint8_t causa = Condiciones_Seguridad.Verificar_Parámetros (); ///REVISAR COMO LLAMAR A LA FUNCIÓN
+
+        if (causa != causas_ninguna) 
+        {
+            /**
+             * @brief función que cambia el estado a estado de seguridad y según el error hace una fase u otra primero
+             * @param fase_actual que decreta la nueva fase a la cual se acude. 
+             */
+            void activarSeguridad (uint8_t causa)
+            {
+                if (causa == causa_fuerza_excesiva) 
+                {
+                    fase_actual = FASE_ABRIR MOTORES // ESTA PARTE ES LO DE FASES QUE HAY QUE REVISAR
+                };
+
+                if (causa != causa_fuerza_excesiva) 
+                {
+                    fase_actual = FASE_DETENER MOTOR
+                };
+            };
+            return true;
+        };
+
+        if (causa == causas_ninguna) 
+        {
+            return false;
+        };
+
+    };
 
 
     /**
       * @brief Cambia el estado de la prótesis y reinicia la fase a @ref FASE_1.
       * @param nuevo_estado Nuevo estado que tomará la prótesis.
       */
-     void cambiarEstado(Estado_Protesis nuevo_estado)
-     {
-         estado_actual = nuevo_estado;
-         fase_actual = FASE_INICIO;
-     }
+    void cambiarEstado(Estado_Protesis nuevo_estado)
+    {
+        if (Comprobacion_Seguridad == true)  ////VER COMO HAY QUE PONERLO BIEN
+        {
+            nuevo_estado = activarSeguridad (uint8_t causa);
+        };
+
+        if (Comprobacion_Seguridad == false) 
+        {
+            estado_actual = nuevo_estado;
+        }; 
+    }
  
      /**
       * @brief Cambia la fase actual de la prótesis.
       * @param nueva_fase Nueva fase que se establecerá.
       */
-     void cambiarFase(Fase_Estado nueva_fase)
+    void cambiarFase(Fase_Estado nueva_fase)
      {
-         fase_actual = nueva_fase;
-     }
-    
-     /**
-      * @brief Cambia a estado de seguridad al detectar cualquier anomalía. Se activa autómaticamnete o ¿manualmente por el usuario?
-      */
-    void manejoSeguridad (bool condiciones_emergencia, Estado_Protesis, Fase_Estado) 
-    {
-        estado_actual = ESTADO_SEGURIDAD; 
-
-        switch (fase_actual) 
+        if (Comprobacion_Seguridad == false) 
         {
-            case FASE_CIERRE:
-            /**
-             * @brief en el caso de que la prótesis tenga la mano cerrada, bloqueada, la abre
-             */
-                if ()
+            fase_actual = nueva_fase;
         };
-    };
+         
+     }
 };
 
 

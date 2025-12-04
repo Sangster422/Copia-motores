@@ -17,6 +17,7 @@
 #include "driver/gpio.h"
 #include "driver/ledc.h"
 
+
  /**
   * @brief Dirección de apertura.
   * @details Cuando el motor está completamente abierto, @ref posMotor es igual a min_pos.
@@ -54,6 +55,7 @@ class motorController{
     uint16_t objective; ///< Posición objetivo.
 
     ledc_channel_t pwm_channel; ///< Canal PWM para controlar la velocidad.
+    
 
     void setup_rotary(); ///< Configura pines del encoder.
     void setup_motor();  ///< Configura pines del motor.
@@ -126,7 +128,10 @@ class motorController{
      this->max_pos = max_pos;
      this->min_pos = min_pos;
      this->position = 0;
-     this->pwm_channel = pwn_channel;
+     this->pwm_channel = pwm_channel;
+     this->until = false;
+     this->objective = 0;
+     this->last_state = false;
      this->setup_rotary();
      this->setup_motor();
  }
@@ -145,7 +150,6 @@ class motorController{
  }
  
  void motorController::setup_motor()
- 
  {
      gpio_config_t io_conf{};
 
@@ -161,18 +165,18 @@ class motorController{
 
     
     ledc_timer_config_t ledc_timer{};
-    ledc_timer.speed_mode       = PWM_MODE;
+    ledc_timer.speed_mode       = LEDC_LOW_SPEED_MODE;;
     ledc_timer.duty_resolution  = LEDC_TIMER_8_BIT;
-    ledc_timer.timer_num        = PWM_TIMER;
+    ledc_timer.timer_num        = LEDC_TIMER_0;
     ledc_timer.freq_hz          = 5000;        
     ledc_timer.clk_cfg          = LEDC_AUTO_CLK;
     ledc_timer_config(&ledc_timer);
 
     ledc_channel_config_t ledc_channel{};
     ledc_channel.gpio_num   = ena;
-    ledc_channel.speed_mode = PWM_MODE;
-    ledc_channel.channel    = PWM_CH;
-    ledc_channel.timer_sel  = PWM_TIMER;
+    ledc_channel.speed_mode = LEDC_LOW_SPEED_MODE;
+    ledc_channel.channel    = pwm_channel;
+    ledc_channel.timer_sel  = LEDC_TIMER_0;
     ledc_channel.duty       = 0;
     ledc_channel.hpoint     = 0;
     ledc_channel_config(&ledc_channel);
@@ -181,8 +185,8 @@ class motorController{
  
  void motorController::step()
  {
-     bool A = digitalRead(this->dt);
-     bool B = digitalRead(this->clk);
+    bool A = gpio_get_level(this->dt);
+    bool B = gpio_get_level(this->clk);
  
      if (A != this->last_state)
      {
@@ -227,8 +231,10 @@ class motorController{
      {
          if (this->position > this->min_pos)
          {
-             analogWrite(this->ena, velocity);
-             digitalWrite(this->ph, direction);
+             ledc_set_duty(LEDC_LOW_SPEED_MODE, this->pwm_channel, velocity);
+             ledc_update_duty(LEDC_LOW_SPEED_MODE, this->pwm_channel);
+
+             gpio_set_level(this->ph, direction);
              arrivedToLimit = false;
          }
          else
@@ -241,8 +247,9 @@ class motorController{
      {
          if (this->position < this->max_pos)
          {
-             analogWrite(this->ena, velocity);
-             digitalWrite(this->ph, direction);
+             ledc_set_duty(LEDC_LOW_SPEED_MODE, this->pwm_channel, velocity);
+             ledc_update_duty(LEDC_LOW_SPEED_MODE, this->pwm_channel);
+             gpio_set_level(this->ph, direction);
              arrivedToLimit = false;
          }
          else
@@ -291,6 +298,7 @@ class motorController{
  void motorController::stop_rotation()
  {
      this->until = false;
-     analogWrite(this->ena, 0);
+     ledc_set_duty(LEDC_LOW_SPEED_MODE, this->pwm_channel, 0);
+     ledc_update_duty(LEDC_LOW_SPEED_MODE, this->pwm_channel);
  }
  

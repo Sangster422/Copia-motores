@@ -9,6 +9,7 @@
 
 #include "globales.h"
 #include "motores.h"
+#include "esp_timer.h"
 
 // Flags de control de motor
 bool motorAbrir = false;   ///< Indica si el motor debe abrir.

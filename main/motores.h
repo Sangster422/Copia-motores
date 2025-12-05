@@ -30,9 +30,6 @@
   */
 #define CERRAR true
 
-
-
-
  /**
   * @class motorController
   * @brief Clase que gestiona un motor con encoder y driver.

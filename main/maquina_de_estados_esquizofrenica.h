@@ -88,10 +88,10 @@ enum Causa_Seguridad
  */
 struct Condiciones_Seguridad 
 {
-    float corriente_motores; ///< Corriente actual.
-    float temperatura;       ///< Temperatura actual.
-    float velocidad;         ///< Velocidad actual.
-    float fuerza;            ///< Fuerza actual.
+    float corriente_motores; ///< Corriente.
+    float temperatura;       ///< Temperatura.
+    float velocidad;         ///< Velocidad.
+    float fuerza;            ///< Fuerza.
     bool señal_sensores;     ///< Recibimos señal de los sensores o no.
     bool posicion;           ///< Comprobamos el estado del encoder.
     
@@ -102,12 +102,13 @@ struct Condiciones_Seguridad
     float umbral_fuerza;
 
     /**
-     * @brief Constructor donde establecemos los valores por defecto
+     * @brief Constructor donde establecemos los valores por defecto.
+     * (**VALORES QUE ME HAN PARECIDO COHERENTES**)
      */
     Condiciones_Seguridad ()
     {
         corriente_motores = 0.0f,
-        temperatura = 25.0f,
+        temperatura = 20.0f,
         velocidad = 0.0f,
         fuerza = 0.0f,
         señal_sensores = true,
@@ -121,8 +122,9 @@ struct Condiciones_Seguridad
     /**
      * @brief Verifica si algún parámetro está en nivel crítico
      * @return Devuelve una causa si hay problema, causas_ninguna si todo correcto.
+     * Esta función la llamamos más adelante, tras leer los valores de corriente, fuerza, temp, etc.
      */
-    Causa_Seguridad Verificar_Parametros () 
+    Causa_Seguridad Verificar_Causas () 
     {   
 
         if (!señal_sensores) 
@@ -160,11 +162,19 @@ struct Condiciones_Seguridad
     };
 
     /**
-    * @brief en esta vamos actualizando los valores en los que realizamos la comprobación.
-    * Es una función que utilizamos más adelante definiento las variables en ese momento haciendo una lectura de dichos valores.
+    * @brief en esta vamos actualizando los valores en los que realizamos la comprobación y leyendo los valores actuales.
+    * Es una función que llamamos más adelante definiento las variables.
     */
-    void actualizacion (float corriente_actual, float temp_actual, float velocidad_actual, float fuerza_actual, bool señal_actual, bool posicion_actual) 
+    void actualizacion () 
     {
+        //leer valores (**HARÍA FALTA COLOCAR AQUÍ UNA FUNCIÓN QUE LEA LOS VALORES**)
+        float corriente_actual = ;
+        float temp_actual = ;
+        float velocidad_actual = ;
+        float fuerza_actual = ;
+        bool señal_actual = ;
+        bool posicion_actual = ;
+
         corriente_motores = corriente_actual; 
         temperatura =  temp_actual ;      
         velocidad = velocidad_actual;        
@@ -191,7 +201,8 @@ struct Maquina_de_estados_protesis
     bool problema_resuelto;
 
     /**
-      * @brief Constructor que inicializa la prótesis en @ref ESTADO_NORMAL y @ref FASE_INICIO. Aplicamos las condiciones iniciales.
+      * @brief Constructor que inicializa la prótesis en @ref ESTADO_NORMAL y @ref FASE_INICIO. 
+      * Aplicamos las condiciones iniciales en este.
       */
     Maquina_de_estados_protesis ()
     {
@@ -213,19 +224,11 @@ struct Maquina_de_estados_protesis
             return true;
         };
 
-        //leer valores (**HARÍA FALTA COLOCAR AQUÍ UNA FUNCIÓN QUE LEA LOS VALORES**)
-        float corriente_motores = ;
-        float temperatura = ;
-        float velocidad = ;
-        float fuerza = ;
-        bool señal_sensores = ;
-        bool posicion = ;
-
-        // actualizamos la estructura de condiciones (sustituimos en la estructura del constructor los nuevos valores que hemos leído)
-        condiciones.actualizacion (corriente_motores, temperatura, velocidad, fuerza, señal_sensores, posicion);
+        // actualizamos la estructura de condiciones
+        condiciones.actualizacion ();
         
         // comprobamos dichos valores a que tipo de causa coinciden. 
-        Causa_Seguridad causa = condiciones.Verificar_Parametros (); 
+        Causa_Seguridad causa = condiciones.Verificar_Causas (); 
 
         if (causa != causas_ninguna)
         {
@@ -279,21 +282,16 @@ struct Maquina_de_estados_protesis
             return true;
         };
 
-        // Re-lectura estado actual (**HACEN FALTA FUNCIONES PARA LEER LOS VALORES**)
-        float corriente = ;
-        float temperatura = ;
-        float velocidad = ;
-        float fuerza = ;
-        bool señal_sensores = ;
-        bool posicion = ;
-
+        // Re-lectura estado actual tras entrar en el paso 1 (abrir mano) en el caso de problemas de fuerza o
+        // entrar en el paso 2 (parar motores) en el resto. Es decir, una vez hacemos la pausa cómo nos encontramos.
+        condiciones.actualizacion ();
 
         //verificación según la causa mediante la comparación con los valores de los umbrales.
         switch(error_actual) 
         {
             case causa_sobrecorriente:
-
-                if (corriente <= condiciones.umbral_corriente) 
+                
+            if ( condiciones.corriente_motores <= condiciones.umbral_corriente) 
                 {
                     problema_resuelto = true;
                 }
@@ -306,7 +304,7 @@ struct Maquina_de_estados_protesis
                 
             case causa_sobrecalentameinto:
 
-                if (temperatura <= condiciones.umbral_temperatura) 
+                if (condiciones.temperatura <= condiciones.umbral_temperatura) 
                 {
                     problema_resuelto = true;
                 }
@@ -318,7 +316,7 @@ struct Maquina_de_estados_protesis
                 
             case causa_velocidad_excesiva:
 
-                if (velocidad <= condiciones.umbral_velocidad) 
+                if (condiciones.velocidad <= condiciones.umbral_velocidad) 
                 {
                     problema_resuelto = true;
                 }
@@ -331,7 +329,7 @@ struct Maquina_de_estados_protesis
                 
             case causa_fuerza_excesiva:
                 
-                if (fuerza <= condiciones.umbral_fuerza) 
+                if (condiciones.fuerza <= condiciones.umbral_fuerza) 
                 {
                     problema_resuelto = true;
                 }
@@ -344,7 +342,7 @@ struct Maquina_de_estados_protesis
                 
             case causa_perdida_sensores:
                 
-                if (señal_sensores) 
+                if (condiciones.señal_sensores) 
                 {
                     problema_resuelto = true;
                 }
@@ -357,7 +355,7 @@ struct Maquina_de_estados_protesis
                 
             case causa_error_encoder:
                  
-                if (posicion) 
+                if (condiciones.posicion) 
                 {
                     problema_resuelto = true;
                 }

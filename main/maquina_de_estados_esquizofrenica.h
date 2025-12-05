@@ -95,7 +95,7 @@ struct Condiciones_Seguridad
     bool señal_sensores;     ///< Recibimos señal de los sensores o no.
     bool posicion;           ///< Comprobamos el estado del encoder.
     
-    //Umbrales configurables
+    //variables para umbrales configurables
     float umbral_corriente; 
     float umbral_temperatura;
     float umbral_velocidad;
@@ -104,7 +104,7 @@ struct Condiciones_Seguridad
     /**
      * @brief Constructor donde establecemos los valores por defecto
      */
-    Condiciones_Seguridad () //REVISAR VALORES
+    Condiciones_Seguridad ()
     {
         corriente_motores = 0.0f,
         temperatura = 25.0f,
@@ -115,12 +115,12 @@ struct Condiciones_Seguridad
         umbral_corriente = UMBRAL_CORRIENTE_DEFAULT,
         umbral_temperatura = UMBRAL_TEMPERATURA_DEFAULT,
         umbral_velocidad = UMBRAL_VELOCIDAD_DEFAULT,
-        umbral_fuerza = UMBRAL_FUERZA_DEFAULT
+        umbral_fuerza = UMBRAL_FUERZA_DEFAULT;
     };
 
     /**
      * @brief Verifica si algún parámetro está en nivel crítico
-     * @return Código de causa si hay problema, causas_ninguna si todo correcto.
+     * @return Devuelve una causa si hay problema, causas_ninguna si todo correcto.
      */
     Causa_Seguridad Verificar_Parametros () 
     {   
@@ -161,15 +161,16 @@ struct Condiciones_Seguridad
 
     /**
     * @brief en esta vamos actualizando los valores en los que realizamos la comprobación.
+    * Es una función que utilizamos más adelante definiento las variables en ese momento haciendo una lectura de dichos valores.
     */
     void actualizacion (float corriente_actual, float temp_actual, float velocidad_actual, float fuerza_actual, bool señal_actual, bool posicion_actual) 
     {
-        corriente_actual = corriente_motores; 
-        temp_actual = temperatura;      
-        velocidad_actual = velocidad;        
-        fuerza_actual = fuerza;            
-        señal_actual = señal_sensores;    
-        posicion_actual = posicion;
+        corriente_motores = corriente_actual; 
+        temperatura =  temp_actual ;      
+        velocidad = velocidad_actual;        
+        fuerza = fuerza_actual;            
+        señal_sensores = señal_actual;    
+        posicion = posicion_actual;
     };
 
 };
@@ -198,21 +199,21 @@ struct Maquina_de_estados_protesis
         fase_actual = FASE_PAUSA;
         error_actual = causas_ninguna;
         en_seguridad = false;
-        problema_resuelto = false; 
+        problema_resuelto = true; 
     };
 
     /**
      * @brief función encargada de actualizar de manera contínua los criterios para ver si hay que entrar en @ref ESTADO_SEGURIDAD.
      * @return TRUE si debemos entrar en el estado de seguridad, false si está todo correcto.
      */
-    bool Comprobacion () 
+    bool ComprobacionSeguridad () 
     {
         if (en_seguridad) 
         {
             return true;
         };
 
-        //leer valores
+        //leer valores (**HARÍA FALTA COLOCAR AQUÍ UNA FUNCIÓN QUE LEA LOS VALORES**)
         float corriente_motores = ;
         float temperatura = ;
         float velocidad = ;
@@ -228,38 +229,48 @@ struct Maquina_de_estados_protesis
 
         if (causa != causas_ninguna)
         {
+            en_seguridad = true;
+            problema_resuelto = false;
             return true;
         };
 
         if (causa == causas_ninguna) 
         {
+            en_seguridad = false;
+            problema_resuelto = true;
             return false;
         };
     };
 
     /**
-    * @brief Entramos en el ESTADO_SEGURIDAD con una causa específica
+    * @brief Si entramos en el ESTADO_SEGURIDAD, entramos con una causa específica
     */
     void ActivarSeguridad (Causa_Seguridad causa) 
     {
-        estado_actual = ESTADO_SEGURIDAD;
-        error_actual = causa;
-        en_seguridad = true;
-        problema_resuelto = false;
+        if (ComprobacionSeguridad) //esta comprobacion era la función que nos decía si hacía falta entrar en seguridad o no. (TRUE si hacía falta)
+        {
+            estado_actual = ESTADO_SEGURIDAD;
+            error_actual = causa;
+            en_seguridad = true;
+            problema_resuelto = false;
 
-        // Según la causa queremos que haga una fase u otra primero
-        if(error_actual == causa_fuerza_excesiva) 
-        {
-            fase_actual = FASE_PASO_1; // Primero abrir para liberar
-        } 
-        else 
-        {
-            fase_actual = FASE_PASO_2; // Detener inmediatamente
-        }
+            // Si hay un problema de exceso de fuerza, queremos que por seguridad abra la mano primero sino, todas harían primero el paso 
+            // de parar motores primero.
+            if(error_actual == causa_fuerza_excesiva) 
+            {
+                fase_actual = FASE_PASO_1; // Primero abrir para liberar
+            } 
+            else 
+            {
+                fase_actual = FASE_PASO_2; // Primero que se detenga inmediatamente
+            }
+        };
+        
     };
    
     /**
      * @brief función para verificar si ya se ha resuelto el problema y de esa forma salir del ESTADO_SEGURIDAD
+     * @return devuelve diferentes valores en la función de problem_resuelto (TRUE/FALSE)
      */
     bool Comprobacion_Problema () 
     {
@@ -268,7 +279,7 @@ struct Maquina_de_estados_protesis
             return true;
         };
 
-        // Re-lectura estado actual (HACEN FALTA FUNCIONES PARA LEER LOS VALORES)
+        // Re-lectura estado actual (**HACEN FALTA FUNCIONES PARA LEER LOS VALORES**)
         float corriente = ;
         float temperatura = ;
         float velocidad = ;
@@ -281,49 +292,95 @@ struct Maquina_de_estados_protesis
         switch(error_actual) 
         {
             case causa_sobrecorriente:
-                problema_resuelto = (corriente <= condiciones.umbral_corriente);
-                break;
+
+                if (corriente <= condiciones.umbral_corriente) 
+                {
+                    problema_resuelto = true;
+                }
+
+                else
+                {
+                    problema_resuelto = false;
+                };   
+            break;
                 
             case causa_sobrecalentameinto:
-                problema_resuelto = (temperatura <= condiciones.umbral_temperatura);
-                break;
+
+                if (temperatura <= condiciones.umbral_temperatura) 
+                {
+                    problema_resuelto = true;
+                }
+                else
+                {
+                    problema_resuelto = false;
+                };
+            break;
                 
             case causa_velocidad_excesiva:
-                problema_resuelto = (velocidad <= condiciones.umbral_velocidad);
-                break;
+
+                if (velocidad <= condiciones.umbral_velocidad) 
+                {
+                    problema_resuelto = true;
+                }
+
+                else
+                {
+                    problema_resuelto = false;
+                };
+            break;
                 
             case causa_fuerza_excesiva:
-                problema_resuelto = (fuerza <= condiciones.umbral_fuerza);
-                break;
+                
+                if (fuerza <= condiciones.umbral_fuerza) 
+                {
+                    problema_resuelto = true;
+                }
+
+                else
+                {
+                    problema_resuelto = false;
+                };
+            break;
                 
             case causa_perdida_sensores:
-                problema_resuelto = señal_sensores;
-                break;
+                
+                if (señal_sensores) 
+                {
+                    problema_resuelto = true;
+                }
+
+                else
+                {
+                    problema_resuelto = false;
+                };
+            break;
                 
             case causa_error_encoder:
-                problema_resuelto = posicion;
-                break;
+                 
+                if (posicion) 
+                {
+                    problema_resuelto = true;
+                }
+
+                else
+                {
+                    problema_resuelto = false;
+                };
+            break;
                 
             default:
                 problema_resuelto = true;
                 break;
         }
-        
-        return problema_resuelto;
     };
 
     /**
-      * @brief Cambia el estado de la prótesis y reinicia la fase a @ref FASE_1.
+      * @brief Cambia el estado de la prótesis y reinicia la fase a @ref FASE_PAUSA solo si la protesis no se encuentra en seguridad.
       * @param nuevo_estado Nuevo estado que tomará la prótesis.
       */
     void cambiarEstado(Estado_Protesis nuevo_estado)
     {
-        if (Comprobacion)  
-        {
-            nuevo_estado =  ActivarSeguridad (Causa_Seguridad causa);
-        };
-
-        if (!Comprobacion) 
+        if (!en_seguridad) 
         {
             estado_actual = nuevo_estado;
         }; 
@@ -335,31 +392,35 @@ struct Maquina_de_estados_protesis
       */
     void cambiarFase(Fase_Estado nueva_fase)
      {
-        if (!Comprobacion) 
+        if (!en_seguridad) 
         {
             fase_actual = nueva_fase;
         };
 
-        if (!Comprobacion_Problema) 
+        if (en_seguridad) 
         {
-            if (problema_resuelto) 
+            switch (fase_actual)
             {
-                void Salir_Seguridad () 
-                {
-                    estado_actual = ESTADO_DESCANSO;
-                    fase_seguridad = FASE_SEG_DETENER;
-                    causa_emergencia = CAUSA_NINGUNA;
-                    en_seguridad = false;
-                    problema_resuelto = true;
-                };
-            };
+                case FASE_PASO_1:
+                    fase_actual = FASE_PASO_2;
+                break;
+
+                case FASE_PASO_2:
+                    fase_actual = FASE_CAMBIO_ESTADO;
+                break;
+
+                case FASE_CAMBIO_ESTADO:
+                    if (problema_resuelto) 
+                    {
+                        en_seguridad = false;
+                        cambiarEstado (ESTADO_NORMAL);
+                    };
+                break;
+            }
         }
          
      };
-
 };
 
 
-/////IMPLEMENTAR FUNCIONES PARA LA LECTURA DE LAS VARIABLES
-
-
+/////IMPLEMENTAR FUNCIONES PARA LA LECTURA DE LAS VARIABLES/////////

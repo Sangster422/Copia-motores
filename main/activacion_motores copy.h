@@ -1,6 +1,6 @@
 /**
- * @file activacion_motores.h
- * @brief Implementación de las funciones de control y gestión de motores.
+ * @file activacion_motores_copy.h
+ * @brief Implementación de las funciones de control y gestión de motores teniendo en cuenta la nueva máquina de estados.
  * @details
  * Contiene las funciones encargadas de la activación, control y parada de los motores,
  * así como el manejo del encoder y la interpretación de la máquina de estados.
@@ -10,6 +10,7 @@
 #include "globales.h"
 #include "motores.h"
 #include "esp_timer.h"
+#include "maquina_de_estados_esquizofrenica.h"
 
 // Flags de control de motor
 bool motorAbrir = false;   ///< Indica si el motor debe abrir.
@@ -112,19 +113,45 @@ void interpretarMaquinaEstados()
   switch (estado_protesis.estado_actual)
   {
   case ESTADO_NORMAL:
+  switch (estado_protesis.fase_actual)
+  {
+    case FASE_PAUSA: 
+      break;
+    case FASE_PASO_1:
+      motorAbrir = true;
+      break;
+    case FASE_PASO_2:
+      motorCerrar = true;
+      break;
+    default:
+      break;
+  }
+  case ESTADO_DESCANSO:
+  switch (estado_protesis.fase_actual)
+  {
+    case FASE_PASO_1: //parada 3s
+      break;
+    case FASE_PASO_2: //apertura 3s
+      motorAbrir = true;
+      break;
+    default:
+      break;
+  }
   case ESTADO_CALIBRADO_MOTORES:
     switch (estado_protesis.fase_actual)
     {
-    case FASE_1:
+    case FASE_PAUSA:
       motorAbrir = motorCerrar = 0;
       break;
-    case FASE_2:
+    case FASE_PASO_1:
       motorAbrir = 1;
       motorCerrar = 0;
       break;
-    case FASE_3:
+    case FASE_PASO_2:
       motorAbrir = 0;
       motorCerrar = 1;
+      break;
+    case FASE_CAMBIO_ESTADO: //pos 0 y estado normal
       break;
     default:
       motorAbrir = motorCerrar = 0;
@@ -135,15 +162,15 @@ void interpretarMaquinaEstados()
   case ESTADO_SEGURIDAD:
     switch (estado_protesis.fase_actual)
     {
-    case FASE_1:
-      motorAbrir = motorCerrar = 0;
+    case FASE_PAUSA:
       break;
-    case FASE_2:
+    case FASE_PASO_1:
       motorAbrir = 1;
       motorCerrar = 0;
       break;
+    case FASE_PASO_2: //parada de motores
+    case FASE_CAMBIO_ESTADO:  //pos 0 y estado normal
     default:
-      motorAbrir = motorCerrar = 0;
       break;
     }
     break;
@@ -233,12 +260,12 @@ void activacionMotores()
   // Calibración de motores: establecer posición inicial
   if (estado_protesis.estado_actual == ESTADO_CALIBRADO_MOTORES)
   {
-    if (estado_protesis.fase_actual != FASE_4)
+    if (estado_protesis.fase_actual != FASE_CAMBIO_ESTADO)
     {
       uint16_t posicionIntermedia = (POSICION_MAXIMA_MOTOR + POSICION_MINIMA_MOTOR) / 2;
       motor.set_position(posicionIntermedia);
     }
-    else
+    else //FASE_CAMBIO_ESTADO
     {
       motor.set_position(0);
       estado_protesis.cambiarEstado(ESTADO_NORMAL);

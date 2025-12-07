@@ -19,8 +19,7 @@
 #include "freertos/queue.h"
 #include "freertos/task.h"
 #include "esp_timer.h"
-
-#include "Maquina_de_estados_protesis.h"
+#include "maquina_de_estados_protesis.h"
  
  // ==========================
  //   Parámetros de hardware

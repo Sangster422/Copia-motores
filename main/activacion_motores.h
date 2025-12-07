@@ -9,7 +9,7 @@
 
 #include "globales.h"
 #include "motores.h"
-
+#include "maquina_de_estados_protesis.h"
 // Flags de control de motor
 bool motorAbrir = false;   ///< Indica si el motor debe abrir.
 bool motorCerrar = false;  ///< Indica si el motor debe cerrar.

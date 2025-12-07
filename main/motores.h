@@ -144,6 +144,8 @@ class motorController{
      io_conf.pull_down_en = GPIO_PULLDOWN_DISABLE;
 
      gpio_config(&io_conf);
+
+     this->last_state = gpio_get_level(this->dt);
  }
  
  void motorController::setup_motor()
@@ -162,7 +164,7 @@ class motorController{
 
     
     ledc_timer_config_t ledc_timer{};
-    ledc_timer.speed_mode       = LEDC_LOW_SPEED_MODE;;
+    ledc_timer.speed_mode       = LEDC_LOW_SPEED_MODE;
     ledc_timer.duty_resolution  = LEDC_TIMER_8_BIT;
     ledc_timer.timer_num        = LEDC_TIMER_0;
     ledc_timer.freq_hz          = 5000;        
@@ -170,9 +172,9 @@ class motorController{
     ledc_timer_config(&ledc_timer);
 
     ledc_channel_config_t ledc_channel{};
-    ledc_channel.gpio_num   = ena;
+    ledc_channel.gpio_num   = this->ena;
     ledc_channel.speed_mode = LEDC_LOW_SPEED_MODE;
-    ledc_channel.channel    = pwm_channel;
+    ledc_channel.channel    = this->pwm_channel;
     ledc_channel.timer_sel  = LEDC_TIMER_0;
     ledc_channel.duty       = 0;
     ledc_channel.hpoint     = 0;

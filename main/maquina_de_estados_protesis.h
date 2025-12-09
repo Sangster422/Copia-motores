@@ -28,8 +28,6 @@
  * @note Las fases no son necesariamente secuenciales; su numeración es solo para organizar.
  */
 
- #pragma once
-
  /**
   * @enum Estado_Protesis
   * @brief Estados posibles de la prótesis.

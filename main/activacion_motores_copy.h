@@ -46,7 +46,7 @@ void IRAM_ATTR updateMotores(void* arg)
 void iniciaEncoder()
 {
 
-  gpio_config_t io_conf{};
+  gpio_config_t io_conf = {0};
   io_conf.intr_type = GPIO_INTR_ANYEDGE;
   io_conf.mode = GPIO_MODE_INPUT;
   io_conf.pin_bit_mask = (1ULL << encoderAPin);
@@ -108,6 +108,9 @@ bool checkMotorPressure()
  * Según el estado y la fase definidos en @ref estado_protesis,
  * establece los flags @ref motorAbrir y @ref motorCerrar.
  */
+
+
+
 void interpretarMaquinaEstados()
 {
   switch (estado_protesis.estado_actual)
@@ -260,7 +263,7 @@ void activacionMotores()
   // Calibración de motores: establecer posición inicial
   if (estado_protesis.estado_actual == ESTADO_CALIBRADO_MOTORES)
   {
-    if (estado_protesis.fase_actual != FASE_CAMBIO_ESTADO)
+    if (estado_protesis.fase_actual != FASE_CAMBIO_ESTADO)              //// ESTA LÍNEA TAMBIÉN PRESENTA UN CAMBIO FRENTE AL ORIGINAL
     {
       uint16_t posicionIntermedia = (POSICION_MAXIMA_MOTOR + POSICION_MINIMA_MOTOR) / 2;
       motor.set_position(posicionIntermedia);
@@ -268,7 +271,7 @@ void activacionMotores()
     else //FASE_CAMBIO_ESTADO
     {
       motor.set_position(0);
-      estado_protesis.cambiarEstado(ESTADO_NORMAL);
+      maquina_cambiarEstado(&estado_protesis, ESTADO_NORMAL);
     }
   }
 

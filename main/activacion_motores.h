@@ -10,24 +10,17 @@
 #include "globales.h"
 #include "motores.h"
 #include "maquina_de_estados_protesis.h"
+
+
 // Flags de control de motor
 bool motorAbrir = false;   ///< Indica si el motor debe abrir.
 bool motorCerrar = false;  ///< Indica si el motor debe cerrar.
 
 /**
- * @brief Instancia del controlador del motor.
- * @details Se inicializa con los pines y límites definidos en @ref globales.h.
+ * @brief Instancia del controlador del motor (C style).
+ * @details Declare the struct and initialize it in `iniciaEncoder()`.
  */
-motorController motor(
-    (gpio_num_t)encoderBPin,        
-    (gpio_num_t)encoderAPin,     
-    (gpio_num_t)motorEnabePWMPin,
-    (gpio_num_t)motorPhasePin,
-    (gpio_num_t)motorSleepPin,
-    (uint16_t)POSICION_MAXIMA_MOTOR,
-    (uint16_t)POSICION_MINIMA_MOTOR,
-    LEDC_CHANNEL_0
-);
+struct motores motor;
 
 /**
  * @brief Rutina de interrupción para el encoder del motor.
@@ -35,7 +28,7 @@ motorController motor(
  */
 void IRAM_ATTR updateMotores(void* arg)
 {
-  motor.step();
+  motores_step(&motor);
 }
 
 /**
@@ -44,7 +37,7 @@ void IRAM_ATTR updateMotores(void* arg)
 void iniciaEncoder()
 {
 
-  gpio_config_t io_conf{};
+  gpio_config_t io_conf = {0};
   io_conf.intr_type = GPIO_INTR_ANYEDGE;
   io_conf.mode = GPIO_MODE_INPUT;
   io_conf.pin_bit_mask = (1ULL << encoderAPin);
@@ -55,6 +48,17 @@ void iniciaEncoder()
   // Registrar la ISR
   gpio_install_isr_service(0); // 0 = usar default ISR service
   gpio_isr_handler_add((gpio_num_t)encoderAPin, updateMotores, NULL);
+
+  /* Initialize motor controller now that GPIOs are ready */
+  motores_init(&motor,
+               (gpio_num_t)encoderBPin,
+               (gpio_num_t)encoderAPin,
+               (gpio_num_t)motorEnabePWMPin,
+               (gpio_num_t)motorPhasePin,
+               (gpio_num_t)motorSleepPin,
+               (uint16_t)POSICION_MAXIMA_MOTOR,
+               (uint16_t)POSICION_MINIMA_MOTOR,
+               LEDC_CHANNEL_0);
 
 }
 
@@ -73,7 +77,7 @@ bool checkMotorPressure()
   static unsigned long tiempoPresion = 0;
   static const uint8_t margenPresion = 1;
 
-  uint16_t posicionActual = motor.read_position();
+  uint16_t posicionActual = motores_read_position(&motor);
   // Asegurar que limiteInferior no tome valores negativos
   uint16_t limiteInferior = (posicionAnterior > margenPresion) ? (posicionAnterior - margenPresion) : 0;
   uint16_t limiteSuperior = posicionAnterior + margenPresion;
@@ -106,7 +110,10 @@ bool checkMotorPressure()
  * Según el estado y la fase definidos en @ref estado_protesis,
  * establece los flags @ref motorAbrir y @ref motorCerrar.
  */
-void interpretarMaquinaEstados()
+
+
+
+void interpretarMaquinaEstados()   
 {
   switch (estado_protesis.estado_actual)
   {
@@ -153,6 +160,32 @@ void interpretarMaquinaEstados()
   }
 }
 
+
+
+
+
+// ESPACIO EN BLANCO SIMPLEMENTE PARA QUE COINCIDAN LÍNEAS CON activacion_motores_copy
+
+
+
+// ESPACIO EN BLANCO SIMPLEMENTE PARA QUE COINCIDAN LÍNEAS CON activacion_motores_copy
+
+
+
+
+// ESPACIO EN BLANCO SIMPLEMENTE PARA QUE COINCIDAN LÍNEAS CON activacion_motores_copy
+
+
+
+// ESPACIO EN BLANCO SIMPLEMENTE PARA QUE COINCIDAN LÍNEAS CON activacion_motores_copy
+
+
+
+// ESPACIO EN BLANCO SIMPLEMENTE PARA QUE COINCIDAN LÍNEAS CON activacion_motores_copy
+
+
+
+
 /**
  * @brief Ejecuta la acción de abrir el motor.
  * @details
@@ -164,7 +197,7 @@ void interpretarMaquinaEstados()
 bool abrirMotor()
 {
   bool direccionMotor = ABRIR;
-  bool motorLlegado = motor.start_until(direccionMotor, POSICION_MINIMA_MOTOR, velocidad_motor_procesada);
+  bool motorLlegado = motores_start_until(&motor, direccionMotor, POSICION_MINIMA_MOTOR, velocidad_motor_procesada);
   return motorLlegado;
 }
 
@@ -179,7 +212,7 @@ bool abrirMotor()
 bool cerrarMotor()
 {
   bool direccionMotor = CERRAR;
-  bool motorLlegado = motor.start_until(direccionMotor, POSICION_MAXIMA_MOTOR, velocidad_motor_procesada);
+  bool motorLlegado = motores_start_until(&motor, direccionMotor, POSICION_MAXIMA_MOTOR, velocidad_motor_procesada);
   bool motorPresionando = (estado_protesis.estado_actual == ESTADO_NORMAL) ? checkMotorPressure() : false;
   return motorLlegado || motorPresionando;
 }
@@ -189,7 +222,7 @@ bool cerrarMotor()
  */
 void pararMotor()
 {
-  motor.stop_rotation();
+  motores_stop_rotation(&motor);
 }
 
 /**
@@ -235,14 +268,14 @@ void activacionMotores()
     if (estado_protesis.fase_actual != FASE_4)
     {
       uint16_t posicionIntermedia = (POSICION_MAXIMA_MOTOR + POSICION_MINIMA_MOTOR) / 2;
-      motor.set_position(posicionIntermedia);
+      motores_set_position(&motor, posicionIntermedia);
     }
     else
     {
-      motor.set_position(0);
-      estado_protesis.cambiarEstado(ESTADO_NORMAL);
+      motores_set_position(&motor, 0);
+      maquina_cambiarEstado(&estado_protesis, ESTADO_NORMAL);
     }
   }
 
-  posicionMotor = motor.read_position();
+  posicionMotor = motores_read_position(&motor);
 }

@@ -1,7 +1,9 @@
 #include <stdio.h>
+#include "activacion_motores.h"
 
 void app_main(void)
 {
-    printf("uwu uwu" );
-    printf("helo");
+
+    semaforoMuestreo = xSemaphoreCreateBinary();
+    printf("\n\nSEMAFORO CREADO: %p\n", semaforoMuestreo);
 }

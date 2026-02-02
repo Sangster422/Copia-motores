@@ -1,0 +1,84 @@
+Los errores que se presentan con  "#include activacion_motores" de momento son los siguientes: 
+
+Error 2 está solucionado
+
+
+
+----
+    1. maquina_de_estados_protesis.h:73
+error: expected specifier-qualifier-list before 'Maquina_de_estados_protesis'
+
+
+---- SOLUCIONADO
+    2. components/freertos/FreeRTOS-Kernel/include/freertos/semphr.h:161
+error: initializer element is not constant
+    2.1. 
+Dicha error lleva a que globales.h:110: 
+    SemaphoreHandle_t semaforoMuestreo = xSemaphoreCreateBinary()
+no funcione correctamente 
+
+SOLUCIÓN: Parece ser que se ha de declarar el semáforo en el mai, no en globales.h;
+main.c -->    semaforoMuestreo = xSemaphoreCreateBinary();
+globales.h -->  Simplemente declarar
+
+
+----
+    3. activacion_motores.h:11
+fatal error: cstdint: No such file or directory (#include <cstdint>)
+
+SOLUCIÓN: Probar <stdint.h>?
+
+
+
+
+NOTA: Parece ser que el error 1 y 3 están relacionados, ya que cstdint parece ser
+propio de C++, y según la IA de GitHub, el error de Maquina_de_estados_protesis
+viene de tener codigo/estructura de C++
+
+"in maquina_de_estados_protesis.h. The file contains C++ code (a constructor and member 
+functions inside a struct) but it's being compiled as C code in an ESP-IDF project."
+
+Solución prouesta a error 1 (a revisar con detenimiento): 
+ struct Maquina_de_estados_protesis
+ {
+     enum Estado_Protesis estado_actual; ///< Estado actual de la prótesis.
+     enum Fase_Estado fase_actual;       ///< Fase actual dentro del estado.
+ };
+
+ /**
+  * @brief Inicializa la máquina de estados en @ref ESTADO_NORMAL y @ref FASE_1.
+  * @param maquina Puntero a la estructura que se inicializará.
+  */
+ static inline void maquina_inicializar(struct Maquina_de_estados_protesis *maquina)
+ {
+     maquina->estado_actual = ESTADO_NORMAL;
+     maquina->fase_actual = FASE_1;
+ }
+
+ /**
+  * @brief Cambia el estado de la prótesis y reinicia la fase a @ref FASE_1.
+  * @param maquina Puntero a la máquina de estados.
+  * @param nuevo_estado Nuevo estado que tomará la prótesis.
+  */
+ static inline void maquina_cambiarEstado(struct Maquina_de_estados_protesis *maquina, enum Estado_Protesis nuevo_estado)
+ {
+     maquina->estado_actual = nuevo_estado;
+     maquina->fase_actual = FASE_1;
+ }
+
+ /**
+  * @brief Cambia la fase actual de la prótesis.
+  * @param maquina Puntero a la máquina de estados.
+  * @param nueva_fase Nueva fase que se establecerá.
+  */
+ static inline void maquina_cambiarFase(struct Maquina_de_estados_protesis *maquina, enum Fase_Estado nueva_fase)
+ {
+     maquina->fase_actual = nueva_fase;
+ }
+ 
+
+_______________________________________________________________________
+
+
+
+Los errores que se presentan con  "#include activacion_motores_copy" de momento son los mismos que el original:

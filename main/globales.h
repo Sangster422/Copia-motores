@@ -107,7 +107,7 @@
  // ==========================
  //   Sincronización
  // ==========================
- SemaphoreHandle_t semaforoMuestreo = xSemaphoreCreateBinary(); ///< Semáforo para sincronizar ISR de muestreo y procesamiento.
+SemaphoreHandle_t semaforoMuestreo; ///< Semáforo para sincronizar ISR de muestreo y procesamiento.
  
  // ==========================
  // Buffers y datos EMG
@@ -149,7 +149,7 @@
  // ==========================
  // Estado de la prótesis
  // ==========================
- Maquina_de_estados_protesis estado_protesis; ///< Máquina de estados general de la prótesis.
+ struct Maquina_de_estados_protesis estado_protesis; ///< Máquina de estados general de la prótesis.
  
  // ==========================
  // Estructuras de depuración
